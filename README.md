@@ -70,6 +70,10 @@ Each recommendation includes:
 /can-i-help --depth=deep           # Include repo-map AST data
 ```
 
+## Validated on 100 repos
+
+The collector passes on 100 open-source repositories across 8 languages (JS/TS, Rust, Go, Python, C/C++, Java, Deno). Contributor signal queries validated on 8 repos with manual cross-checking against actual code: phantom directories filtered, source code prioritized over test/doc dirs, generated data excluded from recommendations.
+
 ## Requirements
 
 - Git repository with history
