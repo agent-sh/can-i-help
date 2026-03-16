@@ -1,0 +1,11 @@
+{
+  "agents": [
+    "can-i-help-agent"
+  ],
+  "skills": [
+    "can-i-help"
+  ],
+  "commands": [
+    "can-i-help"
+  ]
+}
