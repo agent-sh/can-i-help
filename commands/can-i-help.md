@@ -1,6 +1,6 @@
 ---
 description: Find where to contribute to a project - matches your skills to areas that need help, good-first tasks, test gaps, and stale docs
-codex-description: 'Use when user asks to "contribute", "where can I help", "good first issue", "what needs work", "how to contribute", "where to start contributing". Analyzes project needs and suggests contribution areas.'
+codex-description: 'Use when user asks to "contribute", "where can I help", "good first issue", "what needs work", "how to contribute", "where to start contributing", "find tasks", "help with project". Analyzes project needs and suggests contribution areas.'
 argument-hint: "[path] [--depth=normal|deep]"
 allowed-tools: Bash(git:*), Bash(gh:*), Read, Glob, Grep, Task, AskUserQuestion
 ---
