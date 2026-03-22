@@ -8,7 +8,7 @@ tools:
   - Bash(git:*)
   - Bash(gh:*)
   - AskUserQuestion
-model: opus
+model: sonnet
 ---
 
 # Can I Help Agent
