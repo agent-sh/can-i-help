@@ -36,17 +36,19 @@ try {
   const { binary } = require('@agentsys/lib');
   const fs = require('fs');
   const path = require('path');
-  const stateDir = ['.claude', '.opencode', '.codex']
-    .find(d => fs.existsSync(path.join(targetPath, d))) || '.claude';
-  const mapFile = path.join(targetPath, stateDir, 'repo-intel.json');
+  const { getStateDirPath } = require('@agentsys/lib/platform/state-dir');
+  const mapFile = path.join(getStateDirPath(targetPath), 'repo-intel.json');
 
   if (fs.existsSync(mapFile)) {
-    const canHelp = JSON.parse(binary.runAnalyzer(['repo-intel', 'query', 'can-i-help', '--map-file', mapFile, targetPath]));
-    const testGaps = JSON.parse(binary.runAnalyzer(['repo-intel', 'query', 'test-gaps', '--top', '15', '--map-file', mapFile, targetPath]));
-    const docDrift = JSON.parse(binary.runAnalyzer(['repo-intel', 'query', 'doc-drift', '--top', '10', '--map-file', mapFile, targetPath]));
-    const bugspots = JSON.parse(binary.runAnalyzer(['repo-intel', 'query', 'bugspots', '--top', '10', '--map-file', mapFile, targetPath]));
+    const q = (args) => { try { return JSON.parse(binary.runAnalyzer(args)); } catch { return null; } };
+    const canHelp = q(['repo-intel', 'query', 'can-i-help', '--map-file', mapFile, targetPath]);
+    const testGaps = q(['repo-intel', 'query', 'test-gaps', '--top', '15', '--map-file', mapFile, targetPath]);
+    const docDrift = q(['repo-intel', 'query', 'doc-drift', '--top', '10', '--map-file', mapFile, targetPath]);
+    const bugspots = q(['repo-intel', 'query', 'bugspots', '--top', '10', '--map-file', mapFile, targetPath]);
+    const staleDocs = q(['repo-intel', 'query', 'stale-docs', '--top', '15', '--map-file', mapFile, targetPath]);
+    const conventions = q(['repo-intel', 'query', 'conventions', '--map-file', mapFile, targetPath]);
 
-    contributorData = { canHelp, testGaps, docDrift, bugspots };
+    contributorData = { canHelp, testGaps, docDrift, bugspots, staleDocs, conventions };
   }
 } catch (e) { /* unavailable */ }
 
@@ -88,6 +90,10 @@ ${openIssues ? JSON.stringify(openIssues, null, 2) : 'GitHub issues unavailable.
 1. Ask the developer about their experience and what they're interested in
 2. Cross-reference their answer with the project data
 3. Recommend specific contribution areas with rationale
-4. For each recommendation, point to exact files and explain what needs doing`
+4. For each recommendation, point to exact files and explain what needs doing
+
+Use stale-docs data (if available) to identify documentation that needs updating - these are inline code references that point to deleted, renamed, or frequently-changed symbols. Great first contributions.
+
+Use conventions data (if available) to tell the contributor what coding style to follow.`
 });
 ```
