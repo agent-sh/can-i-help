@@ -28,7 +28,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Collector JSDoc updated, missing codex triggers added, JSON validated before write
 - Address agnix warning for redundant instruction in agent config
-- Add contributor signals and GitHub issues integration to collector
 - Sync collector with onboard tuning and contributor signals alignment
 - Consolidated collector incorporating all fix rounds with full contributor signals support
 
