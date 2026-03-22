@@ -45,7 +45,7 @@ try {
     const testGaps = q(['repo-intel', 'query', 'test-gaps', '--top', '15', '--map-file', mapFile, targetPath]);
     const docDrift = q(['repo-intel', 'query', 'doc-drift', '--top', '10', '--map-file', mapFile, targetPath]);
     const bugspots = q(['repo-intel', 'query', 'bugspots', '--top', '10', '--map-file', mapFile, targetPath]);
-    const staleDocs = q(['repo-intel', 'query', 'stale-docs', '--top', '15', '--map-file', mapFile, targetPath]);
+    const staleDocs = q(['repo-intel', 'query', 'stale-docs', '--top', '10', '--map-file', mapFile, targetPath]);
     const conventions = q(['repo-intel', 'query', 'conventions', '--map-file', mapFile, targetPath]);
 
     contributorData = { canHelp, testGaps, docDrift, bugspots, staleDocs, conventions };
