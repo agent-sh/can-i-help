@@ -28,7 +28,7 @@ agentsys install can-i-help
 Three phases run in sequence:
 
 1. **Collect** (automatic, no LLM) - gathers project metadata + contributor-specific signals
-2. **Match** (Opus agent) - asks about developer background, matches skills to project needs
+2. **Match** (Sonnet agent) - asks about developer background, matches skills to project needs
 3. **Guide** (interactive) - for each recommendation, reads relevant code and explains what to do
 
 ## Contributor signals
@@ -45,7 +45,7 @@ Beyond base project data (manifest, structure, git), the collector gathers signa
 
 ## How matching works
 
-The Opus agent tailors recommendations based on developer profile:
+The Sonnet agent tailors recommendations based on developer profile:
 
 | Developer says... | Recommended areas |
 |-------------------|-------------------|
@@ -67,7 +67,7 @@ Each recommendation includes:
 ```
 /can-i-help                        # Current repo, normal depth
 /can-i-help /path/to/repo          # Specific repo
-/can-i-help --depth=deep           # Include repo-map AST data
+/can-i-help --depth=deep           # Include AST symbol data
 ```
 
 ## Validated on 100 repos
@@ -83,7 +83,7 @@ The collector passes on 100 open-source repositories across 8 languages (JS/TS, 
 ## Related plugins
 
 - [onboard](https://github.com/agent-sh/onboard) - codebase orientation (what the project is and how it works)
-- [git-map](https://github.com/agent-sh/git-map) - git history analysis (data source for all contributor signals)
+- [repo-intel](https://github.com/agent-sh/repo-intel) - unified static analysis (data source for all contributor signals)
 
 ## License
 

@@ -26,7 +26,7 @@ Find where a developer can contribute to a project. Collects project data automa
   │   ├─ bugspots query    → bug-prone files
   │   └─ gh issue list     → open GitHub issues
   │
-  ├─ Phase 2: can-i-help-agent (Opus)
+  ├─ Phase 2: can-i-help-agent (Sonnet)
   │   ├─ Ask about developer background
   │   ├─ Match skills to project needs
   │   └─ Recommend specific contribution areas
