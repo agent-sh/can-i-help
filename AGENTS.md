@@ -4,7 +4,7 @@
 
 ## Agents
 
-- can-i-help-agent (opus) - contributor guidance matching skills to project needs
+- can-i-help-agent (sonnet) - contributor guidance matching skills to project needs
 
 ## Skills
 
