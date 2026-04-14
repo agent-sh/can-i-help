@@ -83,7 +83,7 @@ The collector passes on 100 open-source repositories across 8 languages (JS/TS, 
 ## Related plugins
 
 - [onboard](https://github.com/agent-sh/onboard) - codebase orientation (what the project is and how it works)
-- [repo-intel](https://github.com/agent-sh/repo-intel) - unified static analysis (data source for all contributor signals)
+- [repo-intel](https://github.com/agent-sh/repo-intel) - unified repository analysis (data source for all contributor signals)
 
 ## License
 
