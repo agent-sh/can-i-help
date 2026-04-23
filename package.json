@@ -6,5 +6,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/agent-sh/can-i-help.git"
+  },
+  "scripts": {
+    "test": "node --test tests/**/*.test.js"
   }
 }

@@ -19,8 +19,7 @@ Parse from `$ARGUMENTS`:
 ## Phase 1: Collect Onboard Data + Contributor Signals
 
 ```javascript
-const { getPluginRoot } = require('@agentsys/lib/cross-platform');
-const pluginRoot = getPluginRoot('can-i-help');
+const pluginRoot = process.env.CLAUDE_PLUGIN_ROOT;
 const collector = require(`${pluginRoot}/lib/collector`);
 
 const args = '$ARGUMENTS'.split(' ').filter(Boolean);
@@ -33,10 +32,10 @@ const data = collector.collect(targetPath, { depth });
 // Add contributor-specific queries
 let contributorData = null;
 try {
-  const { binary } = require('@agentsys/lib');
+  const { binary } = require(`${pluginRoot}/lib/agentsys`).get();
   const fs = require('fs');
   const path = require('path');
-  const { getStateDirPath } = require('@agentsys/lib/platform/state-dir');
+  const { libRoot } = require(`${pluginRoot}/lib/agentsys`).get(); const { getStateDirPath } = require(`${libRoot}/platform/state-dir`);
   const mapFile = path.join(getStateDirPath(targetPath), 'repo-intel.json');
 
   if (fs.existsSync(mapFile)) {
