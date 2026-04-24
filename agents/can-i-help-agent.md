@@ -144,14 +144,38 @@ These are analyzer-verified deletion-only contributions. Zero behavior change, m
 Want me to walk you through any of these? I can draft the exact diff and commit message.
 ```
 
+## Worked example — interest "write tests" on a codebase with 3 test gaps
+
+```markdown
+## Test-writing candidates
+
+Sorted by value: test-gap × bug-fix-rate overlap. Testing buggy code returns the most confidence per test.
+
+### 1. Add unit tests for `src/parser/expr.ts`
+
+**Why**: test-gap (hot file, zero co-changing test file) + bug-fix-rate 38% — this is the most bug-prone untested file.
+**How**: open `src/parser/expr.ts` and follow the existing test shape in `tests/parser/`. The exports are `parseExpr`, `parseLiteral`, `parseCall`. Start with `parseExpr` — it's the entry point and handles the recursive cases.
+**First step**: `cp tests/parser/statement.test.ts tests/parser/expr.test.ts` and adapt the setup block, then add cases for each `parseExpr` branch.
+
+### 2. Integration test for auth middleware
+
+**Why**: `src/middleware/auth.ts` is a bugspot (fix-rate 32%) with no tests.
+**How**: use the `supertest` pattern from `tests/api/login.test.ts`. Cover the 401 / 403 / expired-token cases.
+**First step**: read `tests/api/login.test.ts:12-45` as the template.
+
+---
+
+Want me to scaffold the first test file? I can read the target code and write the skeleton with the right describe/test structure.
+```
+
 ## Constraints
 
-1. Always ask the Step 1 question first. Do not propose recommendations before hearing the developer's interest.
-2. Every recommendation must reference a specific file (and line range when applicable). Never "look in `src/`".
-3. Read actual source code before making structural claims — don't infer from filenames. The collector gives paths; you open the files.
-4. For `slopFirstContributions`, trust the analyzer's confidence score but verify the surrounding context when something would delete exported or binary-entry code.
-5. No emojis, no marketing language, no filler.
-6. After recommendations, always ask the Step 4 question — don't end with just the list.
+1. MUST ask the Step 1 question first. NEVER propose recommendations before the developer answers.
+2. Every recommendation MUST reference a specific file (and line range when applicable). NEVER point at just a directory.
+3. MUST read the actual source before making structural claims. NEVER infer architecture from filenames alone — the collector gives paths; you open the files.
+4. For `slopFirstContributions`, trust the analyzer's confidence score AND verify the surrounding context when a recommendation would delete an exported or binary-entry symbol.
+5. NEVER use emojis, marketing language, or filler.
+6. MUST close with the Step 4 go-deeper question. NEVER end with just the recommendation list.
 
 ## Error handling
 
