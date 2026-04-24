@@ -52,21 +52,28 @@ try {
     // contributions — deletion-only work with no behavior change.
     // Passthrough-wrappers are borderline (requires inline at all
     // call sites) but manageable; commented-out-code and orphan-
-    // exports are pure deletions. Each capped at 10.
+    // exports are pure deletions. Single-pass partition + count so
+    // each category string lives in exactly one place and we walk
+    // the fixes once.
     const slopRaw = q(['repo-intel', 'query', 'slop-fixes', '--map-file', mapFile, targetPath]);
     const slopFixes = Array.isArray(slopRaw) ? slopRaw : (slopRaw?.fixes || []);
-    const slopFirstContributions = {
-      orphanExports: slopFixes.filter((f) => f.category === 'orphan-export').slice(0, 10),
-      commentedOutCode: slopFixes.filter((f) => f.category === 'commented-out-code').slice(0, 10),
-      passthroughWrappers: slopFixes.filter((f) => f.category === 'passthrough-wrapper').slice(0, 10),
-      alwaysTrueConditions: slopFixes.filter((f) => f.category === 'always-true-condition').slice(0, 10),
-      counts: {
-        orphanExports: slopFixes.filter((f) => f.category === 'orphan-export').length,
-        commentedOutCode: slopFixes.filter((f) => f.category === 'commented-out-code').length,
-        passthroughWrappers: slopFixes.filter((f) => f.category === 'passthrough-wrapper').length,
-        alwaysTrueConditions: slopFixes.filter((f) => f.category === 'always-true-condition').length
-      }
+    const SLOP_CATS = {
+      'orphan-export': 'orphanExports',
+      'commented-out-code': 'commentedOutCode',
+      'passthrough-wrapper': 'passthroughWrappers',
+      'always-true-condition': 'alwaysTrueConditions'
     };
+    const SAMPLE_CAP = 10;
+    const slopFirstContributions = {
+      orphanExports: [], commentedOutCode: [], passthroughWrappers: [], alwaysTrueConditions: [],
+      counts: { orphanExports: 0, commentedOutCode: 0, passthroughWrappers: 0, alwaysTrueConditions: 0 }
+    };
+    for (const fix of slopFixes) {
+      const key = SLOP_CATS[fix.category];
+      if (!key) continue;
+      slopFirstContributions.counts[key] += 1;
+      if (slopFirstContributions[key].length < SAMPLE_CAP) slopFirstContributions[key].push(fix);
+    }
 
     contributorData = { canHelp, testGaps, docDrift, bugspots, staleDocs, conventions, slopFirstContributions };
   }
