@@ -48,7 +48,27 @@ try {
     const staleDocs = q(['repo-intel', 'query', 'stale-docs', '--top', '10', '--map-file', mapFile, targetPath]);
     const conventions = q(['repo-intel', 'query', 'conventions', '--map-file', mapFile, targetPath]);
 
-    contributorData = { canHelp, testGaps, docDrift, bugspots, staleDocs, conventions };
+    // Slop-fixes: partition the categories that make natural first
+    // contributions — deletion-only work with no behavior change.
+    // Passthrough-wrappers are borderline (requires inline at all
+    // call sites) but manageable; commented-out-code and orphan-
+    // exports are pure deletions. Each capped at 10.
+    const slopRaw = q(['repo-intel', 'query', 'slop-fixes', '--map-file', mapFile, targetPath]);
+    const slopFixes = Array.isArray(slopRaw) ? slopRaw : (slopRaw?.fixes || []);
+    const slopFirstContributions = {
+      orphanExports: slopFixes.filter((f) => f.category === 'orphan-export').slice(0, 10),
+      commentedOutCode: slopFixes.filter((f) => f.category === 'commented-out-code').slice(0, 10),
+      passthroughWrappers: slopFixes.filter((f) => f.category === 'passthrough-wrapper').slice(0, 10),
+      alwaysTrueConditions: slopFixes.filter((f) => f.category === 'always-true-condition').slice(0, 10),
+      counts: {
+        orphanExports: slopFixes.filter((f) => f.category === 'orphan-export').length,
+        commentedOutCode: slopFixes.filter((f) => f.category === 'commented-out-code').length,
+        passthroughWrappers: slopFixes.filter((f) => f.category === 'passthrough-wrapper').length,
+        alwaysTrueConditions: slopFixes.filter((f) => f.category === 'always-true-condition').length
+      }
+    };
+
+    contributorData = { canHelp, testGaps, docDrift, bugspots, staleDocs, conventions, slopFirstContributions };
   }
 } catch (e) { /* unavailable */ }
 
@@ -93,6 +113,8 @@ ${openIssues ? JSON.stringify(openIssues, null, 2) : 'GitHub issues unavailable.
 4. For each recommendation, point to exact files and explain what needs doing
 
 Use stale-docs data (if available) to identify documentation that needs updating - these are inline code references that point to deleted, renamed, or frequently-changed symbols. Great first contributions.
+
+Use slopFirstContributions (if available) for deletion-only cleanup work. Orphan exports and commented-out code are the cleanest first PRs: analyzer-verified zero behavior change, mechanical diffs. Passthrough wrappers are slightly harder (inline + update call sites). Always-true-condition findings usually indicate real latent bugs, worth a closer look.
 
 Use conventions data (if available) to tell the contributor what coding style to follow.`
 });
