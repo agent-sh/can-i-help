@@ -19,8 +19,7 @@ Parse from `$ARGUMENTS`:
 ## Phase 1: Collect Onboard Data + Contributor Signals
 
 ```javascript
-const { getPluginRoot } = require('@agentsys/lib/cross-platform');
-const pluginRoot = getPluginRoot('can-i-help');
+const pluginRoot = process.env.CLAUDE_PLUGIN_ROOT;
 const collector = require(`${pluginRoot}/lib/collector`);
 
 const args = '$ARGUMENTS'.split(' ').filter(Boolean);
@@ -30,13 +29,31 @@ const targetPath = args.find(a => !a.startsWith('--')) || process.cwd();
 // Collect base onboard data
 const data = collector.collect(targetPath, { depth });
 
-// Add contributor-specific queries
+// Add contributor-specific queries.
+//
+// What each query gives the contributor agent and how it shapes the
+// "where can I help?" answer:
+//
+//   canHelp     - good-first-areas + needs-help signals derived from
+//                 stale ownership, test gaps, and bug density. Highest-
+//                 priority pointer for newcomers.
+//   testGaps    - hot files (high churn) without a co-changing test
+//                 file. Ideal "add tests" contribution targets.
+//   docDrift    - doc files with low code coupling - candidates for a
+//                 docs-only PR.
+//   bugspots    - files with high bug-fix density (fragile code).
+//                 Touch with care; recommend pairing with a maintainer.
+//   staleDocs   - symbol-level stale references in docs (the doc
+//                 mentions a function that no longer exists). Easy fix.
+//   conventions - commit-message style + naming patterns. Read this
+//                 BEFORE proposing changes so the contributor's PR
+//                 matches the repo's voice.
 let contributorData = null;
 try {
-  const { binary } = require('@agentsys/lib');
+  const { binary } = require(`${pluginRoot}/lib/agentsys`).get();
   const fs = require('fs');
   const path = require('path');
-  const { getStateDirPath } = require('@agentsys/lib/platform/state-dir');
+  const { libRoot } = require(`${pluginRoot}/lib/agentsys`).get(); const { getStateDirPath } = require(`${libRoot}/platform/state-dir`);
   const mapFile = path.join(getStateDirPath(targetPath), 'repo-intel.json');
 
   if (fs.existsSync(mapFile)) {
@@ -77,7 +94,9 @@ try {
 
     contributorData = { canHelp, testGaps, docDrift, bugspots, staleDocs, conventions, slopFirstContributions };
   }
-} catch (e) { /* unavailable */ }
+} catch (e) {
+  console.error(`[INFO] repo-intel contributor data skipped: ${e.message}`);
+}
 
 // Try to get open issues from GitHub
 let openIssues = null;
