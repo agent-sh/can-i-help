@@ -1,6 +1,6 @@
 {
   "name": "@agentsys/can-i-help",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Find where to contribute to any project - matches developer skills to project needs",
   "license": "MIT",
   "repository": {
