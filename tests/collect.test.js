@@ -60,3 +60,21 @@ test('writes the data file into the target state dir', () => {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('repo-map summary reads the current object shape and the old array shape', () => {
+  const { summarizeRepoMapFiles } = require('../lib/collector');
+  const sym = (name, line) => ({ name, kind: 'function', line });
+  const r = summarizeRepoMapFiles({
+    'src/a.js': { symbols: { exports: [sym('a', 1), sym('b', 2), sym('c', 3), sym('d', 4)], functions: [sym('a', 1), sym('e', 9)] } },
+    'src/b.js': { symbols: { exports: [sym('x', 1)] } }
+  });
+  assert.equal(r.totalFiles, 2);
+  assert.equal(r.totalSymbols, 6);
+  assert.deepEqual(r.keyExports, { 'src/a.js': ['a', 'b', 'c', 'd'] });
+
+  const o = summarizeRepoMapFiles({
+    'src/c.js': { symbols: ['p', 'q', 'r', 's', 't'].map(n => ({ name: n, exported: n !== 't' })) }
+  });
+  assert.equal(o.totalSymbols, 5);
+  assert.deepEqual(o.keyExports, { 'src/c.js': ['p', 'q', 'r', 's'] });
+});
