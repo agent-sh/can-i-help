@@ -1,47 +1,24 @@
 ---
 name: can-i-help
-description: "Use when user asks to \"contribute\", \"where can I help\", \"good first issue\", \"what needs work\", \"how to contribute\", \"where to start contributing\", \"find tasks\", \"help with project\". Analyzes project needs and matches to developer skills."
+description: Use when someone asks where they can contribute to a project, wants a good first issue, or asks what needs work. Matches their interests to project data.
 argument-hint: "[path] [--depth=normal|deep]"
 ---
 
-# Can I Help Skill
+# can-i-help
 
-Find where a developer can contribute to a project. Collects project data automatically, queries repo-intel for contributor-specific signals, fetches open issues, then matches developer skills to project needs interactively.
+Find a concrete first contribution for a developer, backed by the project's own data.
 
-## Architecture
+The work runs in two parts. `scripts/collect.js` in this plugin gathers project context and contributor signals with no model involved: manifest, structure, git info, repo-intel queries (can-i-help, test-gaps, doc-drift, bugspots, stale-docs, conventions, slop-fixes) and open GitHub issues. It writes one JSON file and prints its path. The `can-i-help-agent` then asks the developer what they want to work on, reads the relevant code, and recommends targets.
 
-```
-/can-i-help
-  │
-  ├─ Phase 1: collector.js (pure JS, zero LLM)
-  │   ├─ scanManifest()    → package.json/Cargo.toml/go.mod
-  │   ├─ scanStructure()   → directory tree
-  │   ├─ getRepoIntel()    → onboard query for project context
-  │   └─ getGitInfo()      → branch, remote URL
-  │
-  ├─ Phase 1b: Contributor signals (pure JS)
-  │   ├─ can-i-help query  → good-first areas, needs-help areas
-  │   ├─ test-gaps query   → files needing tests
-  │   ├─ doc-drift query   → stale documentation
-  │   ├─ bugspots query    → bug-prone files
-  │   └─ gh issue list     → open GitHub issues
-  │
-  ├─ Phase 2: can-i-help-agent (Sonnet)
-  │   ├─ Ask about developer background
-  │   ├─ Match skills to project needs
-  │   └─ Recommend specific contribution areas
-  │
-  └─ Phase 3: Interactive guidance
-      ├─ Walk through chosen contribution
-      └─ Read code, explain what needs doing
-```
+Run `node <plugin root>/scripts/collect.js $ARGUMENTS` (an optional path and `--depth=normal|deep`), then hand the printed data file to the agent. When subagents are not available, follow `agents/can-i-help-agent.md` in this session.
 
+## Data sources
 
-## Repo-Intel Data
+- `agent-analyzer` supplies the repo-intel queries. It downloads to `~/.agent-sh/bin/` on first use (about 10 MB) and `lib/agentsys.js` finds the agentsys install that manages it. At normal depth the collector builds `repo-intel.json` in the state directory (`.claude`, `.opencode` or `.codex`) when it is missing.
+- `gh` supplies open issues when it is installed and logged in.
 
-**Expected:** the orchestrator (the command that spawned this agent) has already checked `<stateDir>/repo-intel.json` and either pre-fetched the data into your context or skipped (user declined to generate). **Do not call `AskUserQuestion` here** - subagents cannot interact with the user.
+Without either, the recommendations fall back to the manifest, structure, hotspots and the code itself, and the agent says the data is thinner.
 
-**If the pre-fetched data is empty**, proceed with the available context. The orchestrator has already made the decision on the user's behalf.
+## Done
 
-**Binary:** `agent-analyzer` auto-downloads to `~/.agent-sh/bin/` from `agent-sh/agent-analyzer` GitHub releases (~10 MB) on first use. The `lib/agentsys` resolver locates the agentsys install (CC marketplace clone, npm global, or sibling repo).
-
+The developer has at least one recommendation with a file, a data-backed reason, what to change, and a first step, or a plain statement that the data does not support their interest plus the closest alternative.

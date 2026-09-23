@@ -1,147 +1,32 @@
 ---
 description: Find where to contribute to a project - matches your skills to areas that need help, good-first tasks, test gaps, and stale docs
-codex-description: 'Use when user asks to "contribute", "where can I help", "good first issue", "what needs work", "how to contribute", "where to start contributing", "find tasks", "help with project". Analyzes project needs and suggests contribution areas.'
+codex-description: 'Use when the user asks where they can contribute to a project, wants a good first issue, or asks what needs work. Matches their interests to test gaps, stale docs, bugspots, cleanup candidates and open issues.'
 argument-hint: "[path] [--depth=normal|deep]"
-allowed-tools: Bash(git:*), Bash(gh:*), Read, Glob, Grep, Task, AskUserQuestion
+allowed-tools: Bash(git:*), Bash(gh:*), Bash(node:*), Read, Glob, Grep, Task, AskUserQuestion
 ---
 
-# /can-i-help - Contributor Guidance
+# /can-i-help
 
-Find where you can contribute to a project. Builds on onboard data, adds contributor-specific analysis: good-first areas, areas needing help, test gaps, stale docs, and open issues.
+Help a developer find a concrete first contribution to a project: a file, a reason backed by data, and the first thing to do.
 
 ## Arguments
 
-Parse from `$ARGUMENTS`:
+`$ARGUMENTS`, all optional: a path (default: current directory) and `--depth=normal|deep` (default `normal`; `deep` adds repo-map symbols when a map exists).
 
-- **Path**: Directory to analyze (default: current directory)
-- `--depth`: `normal` (default) or `deep` (includes repo-map symbols)
+## Collect
 
-## Phase 1: Collect Onboard Data + Contributor Signals
+Collection is deterministic code, so run it instead of reproducing it:
 
-```javascript
-const pluginRoot = process.env.CLAUDE_PLUGIN_ROOT;
-const collector = require(`${pluginRoot}/lib/collector`);
-
-const args = '$ARGUMENTS'.split(' ').filter(Boolean);
-const depth = args.find(a => a.startsWith('--depth='))?.split('=')[1] || 'normal';
-const targetPath = args.find(a => !a.startsWith('--')) || process.cwd();
-
-// Collect base onboard data
-const data = collector.collect(targetPath, { depth });
-
-// Add contributor-specific queries.
-//
-// What each query gives the contributor agent and how it shapes the
-// "where can I help?" answer:
-//
-//   canHelp     - good-first-areas + needs-help signals derived from
-//                 stale ownership, test gaps, and bug density. Highest-
-//                 priority pointer for newcomers.
-//   testGaps    - hot files (high churn) without a co-changing test
-//                 file. Ideal "add tests" contribution targets.
-//   docDrift    - doc files with low code coupling - candidates for a
-//                 docs-only PR.
-//   bugspots    - files with high bug-fix density (fragile code).
-//                 Touch with care; recommend pairing with a maintainer.
-//   staleDocs   - symbol-level stale references in docs (the doc
-//                 mentions a function that no longer exists). Easy fix.
-//   conventions - commit-message style + naming patterns. Read this
-//                 BEFORE proposing changes so the contributor's PR
-//                 matches the repo's voice.
-let contributorData = null;
-try {
-  const { binary } = require(`${pluginRoot}/lib/agentsys`).get();
-  const fs = require('fs');
-  const path = require('path');
-  const { libRoot } = require(`${pluginRoot}/lib/agentsys`).get(); const { getStateDirPath } = require(`${libRoot}/platform/state-dir`);
-  const mapFile = path.join(getStateDirPath(targetPath), 'repo-intel.json');
-
-  if (fs.existsSync(mapFile)) {
-    const q = (args) => { try { return JSON.parse(binary.runAnalyzer(args)); } catch { return null; } };
-    const canHelp = q(['repo-intel', 'query', 'can-i-help', '--map-file', mapFile, targetPath]);
-    const testGaps = q(['repo-intel', 'query', 'test-gaps', '--top', '15', '--map-file', mapFile, targetPath]);
-    const docDrift = q(['repo-intel', 'query', 'doc-drift', '--top', '10', '--map-file', mapFile, targetPath]);
-    const bugspots = q(['repo-intel', 'query', 'bugspots', '--top', '10', '--map-file', mapFile, targetPath]);
-    const staleDocs = q(['repo-intel', 'query', 'stale-docs', '--top', '10', '--map-file', mapFile, targetPath]);
-    const conventions = q(['repo-intel', 'query', 'conventions', '--map-file', mapFile, targetPath]);
-
-    // Slop-fixes: partition the categories that make natural first
-    // contributions — deletion-only work with no behavior change.
-    // Passthrough-wrappers are borderline (requires inline at all
-    // call sites) but manageable; commented-out-code and orphan-
-    // exports are pure deletions. Single-pass partition + count so
-    // each category string lives in exactly one place and we walk
-    // the fixes once.
-    const slopRaw = q(['repo-intel', 'query', 'slop-fixes', '--map-file', mapFile, targetPath]);
-    const slopFixes = Array.isArray(slopRaw) ? slopRaw : (slopRaw?.fixes || []);
-    const SLOP_CATS = {
-      'orphan-export': 'orphanExports',
-      'commented-out-code': 'commentedOutCode',
-      'passthrough-wrapper': 'passthroughWrappers',
-      'always-true-condition': 'alwaysTrueConditions'
-    };
-    const SAMPLE_CAP = 10;
-    const slopFirstContributions = {
-      orphanExports: [], commentedOutCode: [], passthroughWrappers: [], alwaysTrueConditions: [],
-      counts: { orphanExports: 0, commentedOutCode: 0, passthroughWrappers: 0, alwaysTrueConditions: 0 }
-    };
-    for (const fix of slopFixes) {
-      const key = SLOP_CATS[fix.category];
-      if (!key) continue;
-      slopFirstContributions.counts[key] += 1;
-      if (slopFirstContributions[key].length < SAMPLE_CAP) slopFirstContributions[key].push(fix);
-    }
-
-    contributorData = { canHelp, testGaps, docDrift, bugspots, staleDocs, conventions, slopFirstContributions };
-  }
-} catch (e) {
-  console.error(`[INFO] repo-intel contributor data skipped: ${e.message}`);
-}
-
-// Try to get open issues from GitHub
-let openIssues = null;
-try {
-  const cp = require('child_process');
-  const issuesJson = cp.execFileSync('gh', [
-    'issue', 'list', '-R', data.gitInfo?.remoteUrl?.replace(/\.git$/, '') || '.',
-    '--state', 'open', '--limit', '15', '--json', 'number,title,labels,createdAt'
-  ], { encoding: 'utf8', timeout: 10000, stdio: ['pipe', 'pipe', 'pipe'] });
-  openIssues = JSON.parse(issuesJson);
-} catch (e) { /* gh not available or not a GitHub repo */ }
-
-console.log(`[OK] Data collected for contributor analysis`);
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/collect.js" $ARGUMENTS
 ```
 
-## Phase 2: Agent Analysis
+`${CLAUDE_PLUGIN_ROOT}` is this plugin's root. In a harness that does not substitute it, find `scripts/collect.js` in the plugin directory with Glob. Exit 2 means a bad argument: show the message and stop. On success the script prints one line per source and a final `data: <path>` line pointing at the JSON it wrote. A missing analyzer, repo-intel map or `gh` login is reported as unavailable, not as a failure.
 
-```javascript
-await Task({
-  subagent_type: "can-i-help:can-i-help-agent",
-  prompt: `Help this developer find where to contribute.
+## Match
 
-## Project Context (from /onboard collector)
+Spawn `can-i-help:can-i-help-agent` with the data file path and the target path. The agent asks the developer about their interests, so it needs AskUserQuestion. If the Task tool is missing, or the harness does not let subagents ask the user, do the same work in this session by following the plugin's `agents/can-i-help-agent.md`.
 
-${JSON.stringify(data, null, 2)}
+## Done
 
-## Contributor-Specific Data
-
-${contributorData ? JSON.stringify(contributorData, null, 2) : 'Repo-intel unavailable - use file-based analysis only.'}
-
-## Open Issues
-
-${openIssues ? JSON.stringify(openIssues, null, 2) : 'GitHub issues unavailable.'}
-
-## Your Job
-
-1. Ask the developer about their experience and what they're interested in
-2. Cross-reference their answer with the project data
-3. Recommend specific contribution areas with rationale
-4. For each recommendation, point to exact files and explain what needs doing
-
-Use stale-docs data (if available) to identify documentation that needs updating - these are inline code references that point to deleted, renamed, or frequently-changed symbols. Great first contributions.
-
-Use slopFirstContributions (if available) for deletion-only cleanup work. Orphan exports and commented-out code are the cleanest first PRs: analyzer-verified zero behavior change, mechanical diffs. Passthrough wrappers are slightly harder (inline + update call sites). Always-true-condition findings usually indicate real latent bugs, worth a closer look.
-
-Use conventions data (if available) to tell the contributor what coding style to follow.`
-});
-```
+The developer has at least one recommendation they can start on now, or a plain statement that the data supports nothing for their interest plus the nearest alternative.

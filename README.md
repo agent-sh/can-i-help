@@ -27,7 +27,7 @@ agentsys install can-i-help
 
 Three phases run in sequence:
 
-1. **Collect** (automatic, no LLM) - gathers project metadata + contributor-specific signals
+1. **Collect** (`scripts/collect.js`, no LLM) - gathers project metadata and contributor signals into one JSON file
 2. **Match** (Sonnet agent) - asks about developer background, matches skills to project needs
 3. **Guide** (interactive) - for each recommendation, reads relevant code and explains what to do
 
@@ -41,6 +41,9 @@ Beyond base project data (manifest, structure, git), the collector gathers signa
 | Test gaps | `repo-intel test-gaps` | Hot source files without co-changing test files |
 | Doc drift | `repo-intel doc-drift` | Documentation with low code coupling (likely stale) |
 | Bugspots | `repo-intel bugspots` | Files with high bug-fix density |
+| Stale doc references | `repo-intel stale-docs` | Doc lines that name symbols that no longer exist |
+| Conventions | `repo-intel conventions` | Commit and naming style to match |
+| Cleanup candidates | `repo-intel slop-fixes` | Orphan exports, commented-out code, passthrough wrappers, always-true conditions |
 | Open issues | `gh issue list` | GitHub issues with labels and assignees |
 
 ## How matching works
@@ -77,7 +80,8 @@ The collector passes on 100 open-source repositories across 8 languages (JS/TS, 
 ## Requirements
 
 - Git repository with history
-- [agent-analyzer](https://github.com/agent-sh/agent-analyzer) for contributor signals (optional - prompts to generate if missing)
+- [agent-analyzer](https://github.com/agent-sh/agent-analyzer) for contributor signals (optional; the collector builds the repo-intel map when it is missing)
+- Node.js, to run the collector script
 - GitHub CLI (`gh`) for open issues (optional)
 
 ## Related plugins
