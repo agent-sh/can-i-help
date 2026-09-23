@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-24
+
+### Changed
+
+- Rewrote the command, agent and skill for current models: goal, constraints with reasons, done criteria and the output contract, without step scripts, all-caps rules or long worked examples.
+- Collection runs as `scripts/collect.js` and writes `<stateDir>/can-i-help-data.json`; the agent reads that file.
+
+### Fixed
+
+- The command's collection was JavaScript inside markdown with no `node` in allowed tools, so it could not run as written. It is a script now, with tests.
+- `lib/collector.js` fetched four contributor queries while the command fetched them again plus stale-docs, conventions and slop-fixes. The collector now runs the full set once.
+- Open issues came from `gh issue list -R <remote URL>`, which fails on SSH remotes. The collector's `gh` call in the repo directory is the only source now.
+- `--depth=deep` never returned repo-map data: the collector expected `symbols` as a flat array, while agentsys writes `{ exports, functions, classes, types, constants }`, so the summary threw and was swallowed. Both shapes are read now, key exports capped at 20 files.
+- The skill and README said the user is asked before the repo-intel map is generated. The collector builds it without asking; the docs say so.
+
 ## [0.1.1] - 2026-04-26
 
 ### Changed
@@ -37,5 +52,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sync collector with onboard tuning and contributor signals alignment
 - Consolidated collector incorporating all fix rounds with full contributor signals support
 
-[Unreleased]: https://github.com/agent-sh/can-i-help/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/agent-sh/can-i-help/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/agent-sh/can-i-help/compare/v0.1.1...v0.2.0
 [0.1.0]: https://github.com/agent-sh/can-i-help/releases/tag/v0.1.0
