@@ -9,9 +9,9 @@ Finds where a developer can contribute to a project by matching their interests 
 - Plugin output uses the plain-text markers `[OK]`, `[ERROR]`, `[WARN]`, `[CRITICAL]`, with no emojis or ASCII art: they cost tokens and parse worse.
 - Report finished work in the reply instead of adding summary, plan, audit or temp files.
 - A feature or fix ships with tests for the changed behavior, and `npm test` passes before it is done.
-- Changes beyond a trivial fix go through a PR to main. Run the git hooks; when one blocks, fix the cause.
+- Changes beyond a trivial fix reach main through a PR. Run the git hooks; when one blocks, fix the cause.
 - In prose, write ` - ` (a single dash with spaces), not an em dash or ` -- `.
-- When a script fails, report the error and fix the script rather than doing its work by hand, so broken tooling gets noticed.
+- When a script fails, report the error, then you may do its work by hand. Reporting first is what gets broken tooling fixed.
 - Model choice for agents: Opus for complex reasoning and planning, Sonnet for validation and most agents, Haiku for mechanical steps.
 - Priorities, in order: experience of plugin users, worry-free automation, token efficiency, output quality, simplicity.
 
