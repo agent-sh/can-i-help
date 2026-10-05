@@ -1,56 +1,29 @@
 # can-i-help
 
-> Find where to contribute to any project - matches developer skills to project needs
+## Project overview
 
-## Agents
+Finds where a developer can contribute to a project by matching their interests to the project's own data: test gaps, stale docs, bugspots, cleanup candidates and open issues. Part of the [agentsys](https://github.com/agent-sh/agentsys) ecosystem; skills follow https://agentskills.io.
 
-- can-i-help-agent (sonnet) - contributor guidance matching skills to project needs
+## Conventions
 
-## Skills
+- Plugin output uses the plain-text markers `[OK]`, `[ERROR]`, `[WARN]`, `[CRITICAL]`, with no emojis or ASCII art: they cost tokens and parse worse.
+- Report finished work in the reply instead of adding summary, plan, audit or temp files.
+- A feature or fix ships with tests for the changed behavior, and `npm test` passes before it is done.
+- Changes beyond a trivial fix reach main through a PR. Run the git hooks; when one blocks, fix the cause.
+- In prose, write ` - ` (a single dash with spaces), not an em dash or ` -- `.
+- When a script fails, report the error, then you may do its work by hand. Reporting first is what gets broken tooling fixed.
+- Model choice for agents: Opus for complex reasoning and planning, Sonnet for validation and most agents, Haiku for mechanical steps.
+- Priorities, in order: experience of plugin users, worry-free automation, token efficiency, output quality, simplicity.
 
-- can-i-help
+## Layout
+
+- Command: `commands/can-i-help.md` (`/can-i-help [path] [--depth=normal|deep]`)
+- Agent: `agents/can-i-help-agent.md` (sonnet), asks the developer what they want and recommends targets
+- Skill: `skills/can-i-help/`
+- `scripts/collect.js` gathers project context and repo-intel signals with no model involved and writes one JSON file; the agent does the matching.
 
 ## Commands
 
-- /can-i-help - "where can I contribute?" - matches developer skills to project needs
-
-## Critical Rules
-
-1. **Plain text output** - No emojis, no ASCII art. Use `[OK]`, `[ERROR]`, `[WARN]`, `[CRITICAL]` for status markers.
-2. **No unnecessary files** - Don't create summary files, plan files, audit files, or temp docs.
-3. **Task is not done until tests pass** - Every feature/fix must have quality tests.
-4. **Create PRs for non-trivial changes** - No direct pushes to main.
-5. **Always run git hooks** - Never bypass pre-commit or pre-push hooks.
-6. **Use single dash for em-dashes** - In prose, use ` - ` (single dash with spaces), never ` -- `.
-7. **Report script failures before manual fallback** - Never silently bypass broken tooling.
-8. **Token efficiency** - Save tokens over decorations.
-
-## Model Selection
-
-| Model | When to Use |
-|-------|-------------|
-| **Opus** | Complex reasoning, analysis, planning |
-| **Sonnet** | Validation, pattern matching, most agents |
-| **Haiku** | Mechanical execution, no judgment needed |
-
-## Core Priorities
-
-1. User DX (plugin users first)
-2. Worry-free automation
-3. Token efficiency
-4. Quality output
-5. Simplicity
-
-## References
-
-- Part of the [agentsys](https://github.com/agent-sh/agentsys) ecosystem
-- https://agentskills.io
-
-## Validation scope
-
-Choose checks that cover the changed behavior. For CPU-only tooling, documentation
-and configuration changes, run the relevant CPU tests, static checks and configuration
-validation. Do not require a blanket GPU gate for those changes. Require GPU
-qualification when GPU, runtime or model behavior, or related claims, change.
-Preserve applicable native, model and hardware qualification gates. CPU checks do
-not qualify GPU behavior.
+```bash
+npm test   # collector and agentsys resolver tests
+```
